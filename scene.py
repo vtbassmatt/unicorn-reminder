@@ -1,12 +1,17 @@
+from unicorn import Unicorn
+
 class Scene:
-    def __init__(self, unicorn):
+    def __init__(self, unicorn: Unicorn):
         self.unicorn = unicorn
         self.unicorn.clear()
-
-    def update(self, current, elapsed):
+    
+    def handle_event(self, event, current):
         pass
 
-    def render(self):
+    async def update(self, current, elapsed):
+        pass
+
+    async def render(self):
         self.unicorn.show()
 
     def end(self):
