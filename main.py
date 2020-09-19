@@ -9,17 +9,33 @@ logging.basicConfig(format=log_format, datefmt=date_format, level=logging.DEBUG)
 
 from unicorn import unicorn
 
-def main():
+def game_loop():
+    TARGET_FPS = 15
+    TIME_PER_FRAME = 1.0 / TARGET_FPS
     unicorn.clear()
+    BEGINNING_OF_TIME = time.monotonic()
+
     while True:
+        frame_start = time.monotonic()
+
+        # take input
+        # pass
+
+        # update
         unicorn.set_pixel(random.randrange(0, 16), random.randrange(0, 16), random.randrange(16, 64) * 4 - 1, 0, 0)
+
+        # render
         unicorn.show()
-        time.sleep(.25)
+
+        # sleep
+        sleep_time = frame_start + TIME_PER_FRAME - time.monotonic()
+        if sleep_time > 0:
+            time.sleep(sleep_time)
 
 
 if __name__ == '__main__':
     try:
-        main()
+        game_loop()
     except KeyboardInterrupt:
         unicorn.off()
         logging.debug('and we\'re out')
