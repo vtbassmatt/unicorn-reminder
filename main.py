@@ -7,7 +7,9 @@ logging.basicConfig(format=log_format, datefmt=date_format, level=logging.DEBUG)
 import sys
 import time
 
-from scene import scene
+from red_dots import RedDots
+
+scene = RedDots()
 
 def game_loop():
     TARGET_FPS = 15
