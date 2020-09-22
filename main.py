@@ -25,13 +25,11 @@ async def game_loop():
         frame_start = loop.time()
 
         # take input
-        if schedule.has_event():
-            event = schedule.get_next_event()
+        if event := schedule.get_next_event():
             logging.debug(f"Event: {event['name']} ({event['kind']})")
             scene.handle_event(event, frame_start)
 
         # update
-        schedule.update(frame_start)
         await scene.update(frame_start, frame_start - BEGINNING_OF_TIME)
 
         # render

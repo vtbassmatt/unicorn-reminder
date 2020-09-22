@@ -1,205 +1,87 @@
 import asyncio
-from asyncio.locks import Event
 import datetime
+import logging
 
 from events import EventKind
 
-SCHEDULE = [
-    # 0 - Monday
-    [
-        {
-            'name': 'Do nothing',
-            'until': datetime.time(8, 0, 0),
-            'kind': EventKind.NOTHING,
-        },
-        {
-            'name': 'Show an alert',
-            'until': datetime.time(11, 50, 0),
-            'kind': EventKind.ALERT,
-        },
-        {
-            'name': 'Show a reminder',
-            'until': datetime.time(12, 0, 0),
-            'kind': EventKind.REMIND,
-        },
-        {
-            'name': 'Calm',
-            'until': datetime.time(17, 0, 0),
-            'kind': EventKind.CALM,
-        },
-        {
-            'name': 'Do nothing',
-            'until': datetime.time.max,
-            'kind': EventKind.NOTHING,
-        },
-    ],
-    # 1 - Tuesday
-    [
-        {
-            'name': 'Do nothing',
-            'until': datetime.time(8, 0, 0),
-            'kind': EventKind.NOTHING,
-        },
-        {
-            'name': 'Show an alert',
-            'until': datetime.time(11, 0, 0),
-            'kind': EventKind.ALERT,
-        },
-        {
-            'name': 'Show a reminder',
-            'until': datetime.time(12, 0, 0),
-            'kind': EventKind.REMIND,
-        },
-        {
-            'name': 'Calm',
-            'until': datetime.time(17, 0, 0),
-            'kind': EventKind.CALM,
-        },
-        {
-            'name': 'Do nothing',
-            'until': datetime.time.max,
-            'kind': EventKind.NOTHING,
-        },
-    ],
-    # [
-    #     {
-    #         'name': 'Homeroom',
-    #         'until': datetime.time(8, 30, 0),
-    #     },
-    #     {
-    #         'name': 'Math',
-    #         'until': datetime.time(9, 0, 0),
-    #     },
-    #     {
-    #         'name': 'ELA',
-    #         'until': datetime.time(11, 0, 0),
-    #     },
-    # ],
-    # 2 - Wednesday
-    [
-        {
-            'name': 'Homeroom',
-            'until': datetime.time(8, 30, 0),
-        },
-        {
-            'name': 'Math',
-            'until': datetime.time(9, 0, 0),
-        },
-        {
-            'name': 'ELA',
-            'until': datetime.time(11, 0, 0),
-        },
-        {
-            'name': 'Social Studies',
-            'until': datetime.time(13, 0, 0),
-        },
-    ],
-    # 3 - Thursday
-    [
-        {
-            'name': 'Homeroom',
-            'until': datetime.time(8, 30, 0),
-        },
-        {
-            'name': 'Math',
-            'until': datetime.time(9, 0, 0),
-        },
-        {
-            'name': 'ELA',
-            'until': datetime.time(11, 0, 0),
-        },
-    ],
-    # 4 - Friday
-    [
-        {
-            'name': 'Homeroom',
-            'until': datetime.time(8, 30, 0),
-        },
-        {
-            'name': 'Math',
-            'until': datetime.time(9, 0, 0),
-        },
-        {
-            'name': 'ELA',
-            'until': datetime.time(11, 0, 0),
-        },
-        {
-            'name': 'Social Studies',
-            'until': datetime.time(13, 0, 0),
-        },
-    ],
-    # 5 - Saturday
-    [
-        {
-            'name': 'Do nothing',
-            'until': datetime.time(14, 0, 0),
-            'kind': EventKind.NOTHING,
-        },
-        {
-            'name': 'Show an alert',
-            'until': datetime.time(15, 0, 0),
-            'kind': EventKind.ALERT,
-        },
-        {
-            'name': 'Show a reminder',
-            'until': datetime.time(16, 0, 0),
-            'kind': EventKind.REMIND,
-        },
-        {
-            'name': 'Calm',
-            'until': datetime.time(17, 0, 0),
-            'kind': EventKind.CALM,
-        },
-        {
-            'name': 'Do nothing',
-            'until': datetime.time.max,
-            'kind': EventKind.NOTHING,
-        },
-    ],
-    # 6 - Sunday
-    [
-        {
-            'name': 'Coffee',
-            'until': datetime.time(7, 30, 0),
-        },
-    ],
+
+STARTUP_TIME = datetime.datetime.now()
+FIVE_SECONDS = datetime.timedelta(seconds=5)
+TWENTY_SECONDS = datetime.timedelta(seconds=20)
+
+FAKE_EVENTS = [
+    {
+        'name': 'Show alert',
+        'kind': EventKind.ALERT,
+        'start': STARTUP_TIME - TWENTY_SECONDS,
+    },
+    {
+        'name': 'Get calm',
+        'kind': EventKind.CALM,
+        'start': STARTUP_TIME + FIVE_SECONDS,
+    },
+    {
+        'name': 'Do reminder',
+        'kind': EventKind.REMIND,
+        'start': STARTUP_TIME + TWENTY_SECONDS,
+    },
+    {
+        'name': 'Nothing',
+        'kind': EventKind.NOTHING,
+        'start': datetime.datetime.max,
+    },
 ]
 
-def get_today_schedule():
-    weekday = datetime.datetime.now().weekday()
-    return SCHEDULE[weekday]
+class EventProvider:
+    def get_next_event(self):
+        now = datetime.datetime.now()
+        last_event = { 'start': datetime.datetime.min }
+        for event in FAKE_EVENTS:
+            if last_event['start'] < now < event['start']:
+                self.last_next_event = event
+                return event
+            
+            last_event = event
+
+        raise NotImplementedError('fallen off the edge of time')
+
+    def get_current_event(self):
+        now = datetime.datetime.now()
+        last_event = { 'start': datetime.datetime.min }
+        for event in FAKE_EVENTS:
+            if last_event['start'] < now < event['start']:
+                if 'name' in last_event:
+                    return last_event
+                raise NotImplementedError('before the beginning of time')
+            
+            last_event = event
+
+        raise NotImplementedError('not even sure how we got here')        
 
 
 class Schedule:
     def __init__(self):
-        self.task = asyncio.create_task(self._get_next_event(0))
-        self.events = []
-        self.event_frequency = 30
-    
-    async def _get_next_event(self, time_to_wait):
-        await asyncio.sleep(time_to_wait)
+        self.event_provider = EventProvider()
+        self.task = asyncio.create_task(self._get_current_event())
 
-        schedule = get_today_schedule()
+    async def _get_current_event(self):
+        logging.debug('::: _get_current_event :::')
+        current_event = self.event_provider.get_current_event()
+        logging.debug(f'returning event {current_event["name"]}')
+        return current_event
 
-        now = datetime.datetime.now().time()
-        for event in schedule:
-            # assumes the events come in sorted by time
-            if now < event['until']:
-                return event
-        
-        return {
-            'name': '',
-            'until': datetime.time.max,
-            'kind': EventKind.NOTHING,
-        }
+    async def _get_next_event(self):
+        logging.debug('::: _get_next_event :::')
+        next_event = self.event_provider.get_next_event()
+        logging.debug(f'the next event will be {next_event["name"]}')
+        time_til_event = next_event['start'] - datetime.datetime.now()
+        logging.debug(f'sleeping {time_til_event.seconds} seconds')
+        await asyncio.sleep(time_til_event.seconds)
+        logging.debug(f'returning event {next_event["name"]}')
+        return next_event
 
-    def has_event(self):
-        return len(self.events) > 0
-    
     def get_next_event(self):
-        return self.events.pop()
-    
-    def update(self, current):
         if self.task.done():
-            self.events.append(self.task.result())
-            self.task = asyncio.create_task(self._get_next_event(self.event_frequency))
+            result = self.task.result()
+            self.task = asyncio.create_task(self._get_next_event())
+            return result
