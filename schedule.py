@@ -1,15 +1,8 @@
 import asyncio
 from asyncio.locks import Event
 import datetime
-from enum import Enum
 
-
-class EventKind(Enum):
-    NOTHING = 0
-    ALERT = 1
-    REMIND = 2
-    CALM = 3
-
+from events import EventKind
 
 SCHEDULE = [
     # 0 - Monday
@@ -22,6 +15,34 @@ SCHEDULE = [
         {
             'name': 'Show an alert',
             'until': datetime.time(11, 50, 0),
+            'kind': EventKind.ALERT,
+        },
+        {
+            'name': 'Show a reminder',
+            'until': datetime.time(12, 0, 0),
+            'kind': EventKind.REMIND,
+        },
+        {
+            'name': 'Calm',
+            'until': datetime.time(17, 0, 0),
+            'kind': EventKind.CALM,
+        },
+        {
+            'name': 'Do nothing',
+            'until': datetime.time.max,
+            'kind': EventKind.NOTHING,
+        },
+    ],
+    # 1 - Tuesday
+    [
+        {
+            'name': 'Do nothing',
+            'until': datetime.time(8, 0, 0),
+            'kind': EventKind.NOTHING,
+        },
+        {
+            'name': 'Show an alert',
+            'until': datetime.time(11, 0, 0),
             'kind': EventKind.ALERT,
         },
         {
@@ -53,26 +74,7 @@ SCHEDULE = [
     #         'name': 'ELA',
     #         'until': datetime.time(11, 0, 0),
     #     },
-    #     {
-    #         'name': 'Social Studies',
-    #         'until': datetime.time(13, 0, 0),
-    #     },
     # ],
-    # 1 - Tuesday
-    [
-        {
-            'name': 'Homeroom',
-            'until': datetime.time(8, 30, 0),
-        },
-        {
-            'name': 'Math',
-            'until': datetime.time(9, 0, 0),
-        },
-        {
-            'name': 'ELA',
-            'until': datetime.time(11, 0, 0),
-        },
-    ],
     # 2 - Wednesday
     [
         {

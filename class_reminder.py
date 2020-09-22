@@ -6,7 +6,7 @@ import numpy
 
 from random_dots import RandomDots
 from scene import Scene
-from schedule import EventKind
+from events import EventKind
 from unicorn import unicorn
 
 
