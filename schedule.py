@@ -63,12 +63,17 @@ class Schedule:
     def __init__(self):
         self.event_provider = EventProvider()
         self.task = asyncio.create_task(self._get_current_event())
+        self.debounce = asyncio.create_task(self._debounce(0))
 
     async def _get_current_event(self):
         logging.debug('::: _get_current_event :::')
         current_event = self.event_provider.get_current_event()
         logging.debug(f'returning event {current_event["name"]}')
         return current_event
+    
+    async def _debounce(self, debounce_for=1):
+        logging.debug(f'debouncing for {debounce_for}')
+        await asyncio.sleep(debounce_for)
 
     async def _get_next_event(self):
         logging.debug('::: _get_next_event :::')
@@ -81,7 +86,8 @@ class Schedule:
         return next_event
 
     def get_next_event(self):
-        if self.task.done():
+        if self.task.done() and self.debounce.done():
             result = self.task.result()
+            self.debounce = asyncio.create_task(self._debounce())
             self.task = asyncio.create_task(self._get_next_event())
             return result
