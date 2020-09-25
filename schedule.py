@@ -5,58 +5,129 @@ import logging
 from events import EventKind
 
 
-STARTUP_TIME = datetime.datetime.now()
-FIVE_SECONDS = datetime.timedelta(seconds=5)
-TWENTY_SECONDS = datetime.timedelta(seconds=20)
-
-FAKE_EVENTS = [
-    {
-        'name': 'Show alert',
-        'kind': EventKind.ALERT,
-        'start': STARTUP_TIME - TWENTY_SECONDS,
-    },
-    {
-        'name': 'Get calm',
-        'kind': EventKind.CALM,
-        'start': STARTUP_TIME + FIVE_SECONDS,
-    },
-    {
-        'name': 'Do reminder',
-        'kind': EventKind.REMIND,
-        'start': STARTUP_TIME + TWENTY_SECONDS,
-    },
-    {
-        'name': 'Nothing',
+SCHEDULE = {
+    'Off in the morning': {
+        'at': datetime.time(0, 0, 0),
         'kind': EventKind.NOTHING,
-        'start': datetime.datetime.max,
+        'on': [0, 1, 2, 3, 4, 5, 6],  # every day
     },
-]
+    'Good morning': {
+        'at': datetime.time(7, 0, 0),
+        'kind': EventKind.CALM,
+        'on': [0, 1, 2, 3, 4],  # M-F
+    },
+    'Homeroom soon': {
+        'at': datetime.time(8, 26, 0),
+        'kind': EventKind.ALERT,
+        'on': [0, 1, 2, 3, 4],  # M-F
+    },
+    'Homeroom reminder': {
+        'at': datetime.time(8, 30, 0),
+        'kind': EventKind.REMIND,
+        'on': [0, 1, 2, 3, 4],  # M-F
+    },
+    'Calm before math': {
+        'at': datetime.time(8, 35, 0),
+        'kind': EventKind.CALM,
+        'on': [0, 1, 2, 3, 4],  # M-F
+    },
+    'Math soon': {
+        'at': datetime.time(8, 56, 0),
+        'kind': EventKind.ALERT,
+        'on': [0, 1, 2, 3, 4],  # M-F
+    },
+    'Math reminder': {
+        'at': datetime.time(9, 0, 0),
+        'kind': EventKind.REMIND,
+        'on': [0, 1, 2, 3, 4],  # M-F
+    },
+    'Calm after math': {
+        'at': datetime.time(9, 5, 0),
+        'kind': EventKind.CALM,
+        'on': [0, 1, 2, 3, 4],  # M-F
+    },
+    'ELA soon': {
+        'at': datetime.time(10, 56, 0),
+        'kind': EventKind.ALERT,
+        'on': [0, 1, 2, 3, 4],  # M-F
+    },
+    'ELA reminder': {
+        'at': datetime.time(11, 0, 0),
+        'kind': EventKind.REMIND,
+        'on': [0, 1, 2, 3, 4],  # M-F
+    },
+    'Calm after ELA': {
+        'at': datetime.time(11, 5, 0),
+        'kind': EventKind.CALM,
+        'on': [0, 1, 2, 3, 4],  # M-F
+    },
+    'Social studies soon': {
+        'at': datetime.time(12, 56, 0),
+        'kind': EventKind.ALERT,
+        'on': [0, 2, 4],  # MWF
+    },
+    'Social studies reminder': {
+        'at': datetime.time(13, 0, 0),
+        'kind': EventKind.REMIND,
+        'on': [0, 2, 4],  # MWF
+    },
+    'Calm after social studies': {
+        'at': datetime.time(13, 5, 0),
+        'kind': EventKind.CALM,
+        'on': [0, 2, 4],  # MWF
+    },
+    'Off rest of day': {
+        'at': datetime.time(17, 0, 0),
+        'kind': EventKind.NOTHING,
+        'on': [0, 1, 2, 3, 4],  # M-F
+    },
+}
 
 class EventProvider:
     def get_next_event(self):
         now = datetime.datetime.now()
+        day_of_week = now.weekday()
         last_event = { 'start': datetime.datetime.min }
-        for event in FAKE_EVENTS:
-            if last_event['start'] < now < event['start']:
-                self.last_next_event = event
-                return event
-            
-            last_event = event
 
+        for name, sched_event in SCHEDULE.items():
+            if day_of_week in sched_event['on']:
+                event = {
+                    'name': name,
+                    'kind': sched_event['kind'],
+                    'start': datetime.datetime.combine(now.date(), sched_event['at'])
+                }
+
+                if last_event['start'] < now < event['start']:
+                    self.last_next_event = event
+                    return event
+                
+                last_event = event
+
+        # TODO: handle wrapping to tomorrow
         raise NotImplementedError('fallen off the edge of time')
 
     def get_current_event(self):
         now = datetime.datetime.now()
+        day_of_week = now.weekday()
         last_event = { 'start': datetime.datetime.min }
-        for event in FAKE_EVENTS:
-            if last_event['start'] < now < event['start']:
-                if 'name' in last_event:
-                    return last_event
-                raise NotImplementedError('before the beginning of time')
-            
-            last_event = event
+        for name, sched_event in SCHEDULE.items():
+            if day_of_week in sched_event['on']:
+                event = {
+                    'name': name,
+                    'kind': sched_event['kind'],
+                    'start': datetime.datetime.combine(now.date(), sched_event['at'])
+                }
 
-        raise NotImplementedError('not even sure how we got here')        
+                if last_event['start'] < now < event['start']:
+                    if 'name' in last_event:
+                        return last_event
+
+                    # TODO: handle wrapping to yesterday (or just return nothing?)
+                    raise NotImplementedError('before the beginning of time')
+                
+                last_event = event
+
+        raise NotImplementedError('not even sure how we got here')
 
 
 class Schedule:
