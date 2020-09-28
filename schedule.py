@@ -102,7 +102,7 @@ class EventProvider:
             )
 
         if not event:
-            raise RuntimeError('could not find an event to return')
+            raise RuntimeError('could not find a future event to return')
 
         return event
     
@@ -132,19 +132,24 @@ class EventProvider:
                 event = {
                     'name': name,
                     'kind': sched_event['kind'],
-                    'start': datetime.datetime.combine(now.date(), sched_event['at'])
+                    'start': datetime.datetime.combine(now.date(), sched_event['at']),
                 }
 
                 if last_event['start'] <= now <= event['start']:
                     if 'name' in last_event:
                         return last_event
 
-                    # TODO: handle wrapping to yesterday (or just return nothing?)
-                    raise NotImplementedError('before the beginning of time')
+                    # if we haven't reached the first event of the day,
+                    # return a big nothing-burger
+                    return {
+                        'name': 'Have not reached first event of the day',
+                        'kind': EventKind.NOTHING,
+                        'start': datetime.datetime.combine(now.date(), datetime.time(0, 0, 0)),
+                    }
                 
                 last_event = event
 
-        raise NotImplementedError('not even sure how we got here')
+        raise RuntimeError('could not find a current event to return')
 
 
 class Schedule:
