@@ -85,8 +85,28 @@ SCHEDULE = {
 
 class EventProvider:
     def get_next_event(self):
+        event = None
+
+        # start at now/today
         now = datetime.datetime.now()
-        day_of_week = now.weekday()
+        day_of_week = initial_dow = now.weekday()
+
+        while not event and day_of_week < initial_dow + 7:
+            event = self._get_next_event_on(day_of_week % 7, now)
+
+            # future iterations of the loop will use next day / midnight
+            day_of_week += 1
+            now = datetime.datetime.combine(
+                now.date() + datetime.timedelta(days=1),
+                datetime.time(0, 0, 0)
+            )
+
+        if not event:
+            raise RuntimeError('could not find an event to return')
+
+        return event
+    
+    def _get_next_event_on(self, day_of_week, check_time):
         last_event = { 'start': datetime.datetime.min }
 
         for name, sched_event in SCHEDULE.items():
@@ -94,17 +114,14 @@ class EventProvider:
                 event = {
                     'name': name,
                     'kind': sched_event['kind'],
-                    'start': datetime.datetime.combine(now.date(), sched_event['at'])
+                    'start': datetime.datetime.combine(check_time.date(), sched_event['at'])
                 }
-
-                if last_event['start'] < now < event['start']:
+                
+                if last_event['start'] <= check_time <= event['start']:
                     self.last_next_event = event
                     return event
                 
                 last_event = event
-
-        # TODO: handle wrapping to tomorrow
-        raise NotImplementedError('fallen off the edge of time')
 
     def get_current_event(self):
         now = datetime.datetime.now()
@@ -118,7 +135,7 @@ class EventProvider:
                     'start': datetime.datetime.combine(now.date(), sched_event['at'])
                 }
 
-                if last_event['start'] < now < event['start']:
+                if last_event['start'] <= now <= event['start']:
                     if 'name' in last_event:
                         return last_event
 
