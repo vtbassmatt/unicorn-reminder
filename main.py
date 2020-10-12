@@ -25,7 +25,8 @@ async def game_loop():
         frame_start = loop.time()
 
         # take input
-        if event := schedule.get_next_event():
+        event = schedule.get_next_event()
+        if event:
             logging.debug(f"Event: {event['name']} ({event['kind']})")
             scene.handle_event(event, frame_start)
 
