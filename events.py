@@ -6,3 +6,7 @@ class EventKind(Enum):
     ALERT = 1
     REMIND = 2
     CALM = 3
+
+
+class ScheduledEventError(RuntimeError):
+    pass

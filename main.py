@@ -8,6 +8,7 @@ import asyncio
 import sys
 
 from class_reminder import ClassReminder
+from events import ScheduledEventError
 from schedule import Schedule
 
 scene = ClassReminder()
@@ -49,3 +50,7 @@ if __name__ == '__main__':
         scene.end()
         logging.debug('and we\'re out')
         sys.exit(0)
+    except ScheduledEventError:
+        scene.end()
+        logging.debug('schedule problem')
+        raise

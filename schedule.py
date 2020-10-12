@@ -3,7 +3,7 @@ import datetime
 import json
 import logging
 
-from events import EventKind
+from events import EventKind, ScheduledEventError
 
 
 class EventProvider:
@@ -38,7 +38,7 @@ class EventProvider:
             )
 
         if not event:
-            raise RuntimeError('could not find a future event to return')
+            raise ScheduledEventError('could not find a future event to return')
 
         return event
     
@@ -85,7 +85,7 @@ class EventProvider:
                 
                 last_event = event
 
-        raise RuntimeError('could not find a current event to return')
+        raise ScheduledEventError('could not find a current event to return')
 
 
 class Schedule:
