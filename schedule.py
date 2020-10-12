@@ -1,89 +1,25 @@
 import asyncio
 import datetime
+import json
 import logging
 
 from events import EventKind
 
 
-SCHEDULE = {
-    'Off in the morning': {
-        'at': datetime.time(0, 0, 0),
-        'kind': EventKind.NOTHING,
-        'on': [0, 1, 2, 3, 4, 5, 6],  # every day
-    },
-    'Good morning': {
-        'at': datetime.time(7, 0, 0),
-        'kind': EventKind.CALM,
-        'on': [0, 1, 2, 3, 4],  # M-F
-    },
-    'Homeroom soon': {
-        'at': datetime.time(8, 26, 0),
-        'kind': EventKind.ALERT,
-        'on': [0, 1, 2, 3, 4],  # M-F
-    },
-    'Homeroom reminder': {
-        'at': datetime.time(8, 30, 0),
-        'kind': EventKind.REMIND,
-        'on': [0, 1, 2, 3, 4],  # M-F
-    },
-    'Calm before math': {
-        'at': datetime.time(8, 35, 0),
-        'kind': EventKind.CALM,
-        'on': [0, 1, 2, 3, 4],  # M-F
-    },
-    'Math soon': {
-        'at': datetime.time(8, 56, 0),
-        'kind': EventKind.ALERT,
-        'on': [0, 1, 2, 3, 4],  # M-F
-    },
-    'Math reminder': {
-        'at': datetime.time(9, 0, 0),
-        'kind': EventKind.REMIND,
-        'on': [0, 1, 2, 3, 4],  # M-F
-    },
-    'Calm after math': {
-        'at': datetime.time(9, 5, 0),
-        'kind': EventKind.CALM,
-        'on': [0, 1, 2, 3, 4],  # M-F
-    },
-    'ELA soon': {
-        'at': datetime.time(10, 56, 0),
-        'kind': EventKind.ALERT,
-        'on': [0, 1, 2, 3, 4],  # M-F
-    },
-    'ELA reminder': {
-        'at': datetime.time(11, 0, 0),
-        'kind': EventKind.REMIND,
-        'on': [0, 1, 2, 3, 4],  # M-F
-    },
-    'Calm after ELA': {
-        'at': datetime.time(11, 5, 0),
-        'kind': EventKind.CALM,
-        'on': [0, 1, 2, 3, 4],  # M-F
-    },
-    'Social studies soon': {
-        'at': datetime.time(12, 56, 0),
-        'kind': EventKind.ALERT,
-        'on': [0, 2, 4],  # MWF
-    },
-    'Social studies reminder': {
-        'at': datetime.time(13, 0, 0),
-        'kind': EventKind.REMIND,
-        'on': [0, 2, 4],  # MWF
-    },
-    'Calm after social studies': {
-        'at': datetime.time(13, 5, 0),
-        'kind': EventKind.CALM,
-        'on': [0, 2, 4],  # MWF
-    },
-    'Off rest of day': {
-        'at': datetime.time(17, 0, 0),
-        'kind': EventKind.NOTHING,
-        'on': [0, 1, 2, 3, 4],  # M-F
-    },
-}
-
 class EventProvider:
+    def __init__(self):
+        with open('schedule.json') as f:
+            self.schedule = json.load(f)
+        
+        # rewrite schedule data
+        for event_name, payload in self.schedule.items():
+            at = payload['at'].split(':')
+            real_time = datetime.time(int(at[0]), int(at[1]), int(at[2]))
+            self.schedule[event_name]['at'] = real_time
+
+            kind = EventKind[payload['kind']]
+            self.schedule[event_name]['kind'] = kind
+
     def get_next_event(self):
         event = None
 
@@ -109,7 +45,7 @@ class EventProvider:
     def _get_next_event_on(self, day_of_week, check_time):
         last_event = { 'start': datetime.datetime.min }
 
-        for name, sched_event in SCHEDULE.items():
+        for name, sched_event in self.schedule.items():
             if day_of_week in sched_event['on']:
                 event = {
                     'name': name,
@@ -127,7 +63,7 @@ class EventProvider:
         now = datetime.datetime.now()
         day_of_week = now.weekday()
         last_event = { 'start': datetime.datetime.min }
-        for name, sched_event in SCHEDULE.items():
+        for name, sched_event in self.schedule.items():
             if day_of_week in sched_event['on']:
                 event = {
                     'name': name,
